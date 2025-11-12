@@ -9,6 +9,9 @@ import (
 var ExternalNameConfigs = map[string]config.ExternalName{
 	// Import requires using a randomly generated ID from provider: nl-2e21sda
 	"cloudscale_objects_user": idWithStub(),
+	"cloudscale_network":      idWithStub(),
+	"cloudscale_server":       idWithStub(),
+	"cloudscale_subnet":       idWithStub(),
 }
 
 func idWithStub() config.ExternalName {

@@ -6,8 +6,14 @@ import (
 
 	ujconfig "github.com/crossplane/upjet/v2/pkg/config"
 
+	networkCluster "github.com/splattner/provider-cloudscale/config/cluster/network"
 	objectuserCluster "github.com/splattner/provider-cloudscale/config/cluster/objectsuser"
+	serverCluster "github.com/splattner/provider-cloudscale/config/cluster/server"
+	subnetCluster "github.com/splattner/provider-cloudscale/config/cluster/subnet"
+	networkNamespaced "github.com/splattner/provider-cloudscale/config/namespaced/network"
 	objectuserNamespaced "github.com/splattner/provider-cloudscale/config/namespaced/objectsuser"
+	serverNamespaced "github.com/splattner/provider-cloudscale/config/namespaced/server"
+	subnetNamespaced "github.com/splattner/provider-cloudscale/config/namespaced/subnet"
 )
 
 const (
@@ -34,6 +40,9 @@ func GetProvider() *ujconfig.Provider {
 	for _, configure := range []func(provider *ujconfig.Provider){
 		// add custom config functions
 		objectuserCluster.Configure,
+		networkCluster.Configure,
+		serverCluster.Configure,
+		subnetCluster.Configure,
 	} {
 		configure(pc)
 	}
@@ -58,6 +67,9 @@ func GetProviderNamespaced() *ujconfig.Provider {
 	for _, configure := range []func(provider *ujconfig.Provider){
 		// add custom config functions
 		objectuserNamespaced.Configure,
+		networkNamespaced.Configure,
+		serverNamespaced.Configure,
+		subnetNamespaced.Configure,
 	} {
 		configure(pc)
 	}

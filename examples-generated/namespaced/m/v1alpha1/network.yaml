@@ -1,0 +1,42 @@
+apiVersion: m.cloudscale.ch/v1alpha1
+kind: Network
+metadata:
+  annotations:
+    meta.upbound.io/example-id: m/v1alpha1/network
+  labels:
+    testing.upbound.io/example-name: privnet
+  name: privnet
+  namespace: crossplane-system
+spec:
+  forProvider:
+    mtu: "9000"
+    name: privnet
+    zoneSlug: lpg1
+
+---
+
+apiVersion: m.cloudscale.ch/v1alpha1
+kind: Server
+metadata:
+  annotations:
+    meta.upbound.io/example-id: /v1alpha1/network
+  labels:
+    testing.upbound.io/example-name: gw
+  name: gw
+  namespace: crossplane-system
+spec:
+  forProvider:
+    flavorSlug: flex-8-4
+    imageSlug: debian-11
+    interfaces:
+    - type: public
+    - networkUuidSelector:
+        matchLabels:
+          testing.upbound.io/example-name: privnet
+      type: private
+    name: gateway
+    sshKeys:
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW
+      user@example.com
+    volumeSizeGb: 20
+    zoneSlug: lpg1

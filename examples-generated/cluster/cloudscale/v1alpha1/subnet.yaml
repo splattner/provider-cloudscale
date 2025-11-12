@@ -1,0 +1,65 @@
+apiVersion: cloudscale.ch/v1alpha1
+kind: Subnet
+metadata:
+  annotations:
+    meta.upbound.io/example-id: cloudscale/v1alpha1/subnet
+  labels:
+    testing.upbound.io/example-name: privnet-subnet
+  name: privnet-subnet
+spec:
+  forProvider:
+    cidr: 10.11.12.0/24
+    dnsServers:
+    - 1.2.3.4
+    - 5.6.7.8
+    - 9.10.11.12
+    gatewayAddress: 10.11.12.10
+    networkUuidSelector:
+      matchLabels:
+        testing.upbound.io/example-name: privnet
+
+---
+
+apiVersion: cloudscale.ch/v1alpha1
+kind: Network
+metadata:
+  annotations:
+    meta.upbound.io/example-id: /v1alpha1/subnet
+  labels:
+    testing.upbound.io/example-name: privnet
+  name: privnet
+spec:
+  forProvider:
+    autoCreateIpv4Subnet: "false"
+    mtu: "9000"
+    name: privnet
+    zoneSlug: lpg1
+
+---
+
+apiVersion: cloudscale.ch/v1alpha1
+kind: Server
+metadata:
+  annotations:
+    meta.upbound.io/example-id: /v1alpha1/subnet
+  labels:
+    testing.upbound.io/example-name: fixed
+  name: fixed
+spec:
+  forProvider:
+    flavorSlug: flex-4-1
+    imageSlug: debian-11
+    interfaces:
+    - type: public
+    - addresses:
+      - address: 10.11.12.13
+        subnetUuidSelector:
+          matchLabels:
+            testing.upbound.io/example-name: example
+      type: private
+    name: fix
+    sshKeys:
+    - ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFEepRNW5hDct4AdJ8oYsb4lNP5E9XY5fnz3ZvgNCEv7m48+bhUjJXUPuamWix3zigp2lgJHC6SChI/okJ41GUY=
+    - ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFEepRNW5hDct4AdJ8oYsb4lNP5E9XY5fnz3ZvgNCEv7m48+bhUjJXUPuamWix3zigp2lgJHC6SChI/okJ41GUY=
+    volumeSizeGb: 10
+    zoneSlug: lpg1

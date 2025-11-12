@@ -1,0 +1,11 @@
+apiVersion: cloudscale.ch/v1alpha1
+kind: ObjectsUser
+metadata:
+  annotations:
+    meta.upbound.io/example-id: cloudscale/v1alpha1/objectsuser
+  labels:
+    testing.upbound.io/example-name: basic
+  name: basic
+spec:
+  forProvider:
+    displayName: donald_knuth

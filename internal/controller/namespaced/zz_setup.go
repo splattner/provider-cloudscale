@@ -9,7 +9,10 @@ import (
 
 	"github.com/crossplane/upjet/v2/pkg/controller"
 
-	user "github.com/splattner/provider-cloudscale/internal/controller/namespaced/objects/user"
+	network "github.com/splattner/provider-cloudscale/internal/controller/namespaced/m/network"
+	objectsuser "github.com/splattner/provider-cloudscale/internal/controller/namespaced/m/objectsuser"
+	server "github.com/splattner/provider-cloudscale/internal/controller/namespaced/m/server"
+	subnet "github.com/splattner/provider-cloudscale/internal/controller/namespaced/m/subnet"
 	providerconfig "github.com/splattner/provider-cloudscale/internal/controller/namespaced/providerconfig"
 )
 
@@ -17,7 +20,10 @@ import (
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		user.Setup,
+		network.Setup,
+		objectsuser.Setup,
+		server.Setup,
+		subnet.Setup,
 		providerconfig.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
@@ -31,7 +37,10 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 // the supplied manager gated.
 func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		user.SetupGated,
+		network.SetupGated,
+		objectsuser.SetupGated,
+		server.SetupGated,
+		subnet.SetupGated,
 		providerconfig.SetupGated,
 	} {
 		if err := setup(mgr, o); err != nil {

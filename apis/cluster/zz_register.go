@@ -10,7 +10,7 @@ package cluster
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	v1alpha1 "github.com/splattner/provider-cloudscale/apis/cluster/objects/v1alpha1"
+	v1alpha1 "github.com/splattner/provider-cloudscale/apis/cluster/cloudscale/v1alpha1"
 	v1alpha1cluster "github.com/splattner/provider-cloudscale/apis/cluster/v1alpha1"
 	v1beta1 "github.com/splattner/provider-cloudscale/apis/cluster/v1beta1"
 )

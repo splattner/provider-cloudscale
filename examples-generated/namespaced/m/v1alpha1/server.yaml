@@ -1,0 +1,21 @@
+apiVersion: m.cloudscale.ch/v1alpha1
+kind: Server
+metadata:
+  annotations:
+    meta.upbound.io/example-id: m/v1alpha1/server
+  labels:
+    testing.upbound.io/example-name: web-worker01
+  name: web-worker01
+  namespace: crossplane-system
+spec:
+  forProvider:
+    flavorSlug: flex-8-4
+    imageSlug: debian-11
+    name: web-worker01
+    sshKeys:
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW
+      user@example.com
+    timeouts:
+    - create: 10m
+      update: 1h
+    volumeSizeGb: 10
