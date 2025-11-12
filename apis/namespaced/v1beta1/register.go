@@ -9,7 +9,7 @@ import (
 
 // Package type metadata.
 const (
-	Group   = "cloudscale.m.cloudscale.ch"
+	Group   = "m.cloudscale.ch"
 	Version = "v1beta1"
 )
 

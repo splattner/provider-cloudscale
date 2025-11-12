@@ -9,7 +9,7 @@ import (
 
 	"github.com/crossplane/upjet/v2/pkg/controller"
 
-	user "github.com/splattner/provider-cloudscale/internal/controller/namespaced/objects_user/user"
+	user "github.com/splattner/provider-cloudscale/internal/controller/namespaced/objects/user"
 	providerconfig "github.com/splattner/provider-cloudscale/internal/controller/namespaced/providerconfig"
 )
 

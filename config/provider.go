@@ -6,13 +6,13 @@ import (
 
 	ujconfig "github.com/crossplane/upjet/v2/pkg/config"
 
-	objectuserCluster "github.com/splattner/provider-cloudscale/config/cluster/cloudscale_objects_user"
-	objectuserNamespaced "github.com/splattner/provider-cloudscale/config/namespaced/cloudscale_objects_user"
+	objectuserCluster "github.com/splattner/provider-cloudscale/config/cluster/objectsuser"
+	objectuserNamespaced "github.com/splattner/provider-cloudscale/config/namespaced/objectsuser"
 )
 
 const (
 	resourcePrefix = "cloudscale"
-	modulePath     = "github.com//provider-cloudscale"
+	modulePath     = "github.com/splattner/provider-cloudscale"
 )
 
 //go:embed schema.json
@@ -24,7 +24,7 @@ var providerMetadata string
 // GetProvider returns provider configuration
 func GetProvider() *ujconfig.Provider {
 	pc := ujconfig.NewProvider([]byte(providerSchema), resourcePrefix, modulePath, []byte(providerMetadata),
-		ujconfig.WithRootGroup("cloudscale.cloudscale.ch"),
+		ujconfig.WithRootGroup("cloudscale.ch"),
 		ujconfig.WithIncludeList(ExternalNameConfigured()),
 		ujconfig.WithFeaturesPackage("internal/features"),
 		ujconfig.WithDefaultResourceOptions(
@@ -45,7 +45,7 @@ func GetProvider() *ujconfig.Provider {
 // GetProviderNamespaced returns the namespaced provider configuration
 func GetProviderNamespaced() *ujconfig.Provider {
 	pc := ujconfig.NewProvider([]byte(providerSchema), resourcePrefix, modulePath, []byte(providerMetadata),
-		ujconfig.WithRootGroup("cloudscale.m.cloudscale.ch"),
+		ujconfig.WithRootGroup("m.cloudscale.ch"),
 		ujconfig.WithIncludeList(ExternalNameConfigured()),
 		ujconfig.WithFeaturesPackage("internal/features"),
 		ujconfig.WithDefaultResourceOptions(

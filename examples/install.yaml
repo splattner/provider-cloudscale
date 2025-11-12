@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-cloudscale
 spec:
-  package: xpkg.crossplane.io//provider-cloudscale:v0.1.0
+  package: xpkg.crossplane.io/splattner/provider-cloudscale:v0.1.0
