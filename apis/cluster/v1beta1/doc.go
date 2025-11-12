@@ -1,5 +1,5 @@
-// Package v1beta1 contains the core resources of the template upjet provider.
+// Package v1beta1 contains the core resources of the cloudscale upjet provider.
 // +kubebuilder:object:generate=true
-// +groupName=template.crossplane.io
+// +groupName=cloudscale.cloudscale.ch
 // +versionName=v1beta1
 package v1beta1

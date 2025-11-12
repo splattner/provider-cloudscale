@@ -9,7 +9,7 @@ import (
 
 // Package type metadata.
 const (
-	Group   = "template.m.crossplane.io"
+	Group   = "cloudscale.m.cloudscale.ch"
 	Version = "v1beta1"
 )
 

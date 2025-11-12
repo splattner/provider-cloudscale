@@ -1,0 +1,12 @@
+apiVersion: objects_user.cloudscale.m.cloudscale.ch/v1alpha1
+kind: User
+metadata:
+  annotations:
+    meta.upbound.io/example-id: objects_user/v1alpha1/user
+  labels:
+    testing.upbound.io/example-name: basic
+  name: basic
+  namespace: crossplane-system
+spec:
+  forProvider:
+    displayName: donald_knuth

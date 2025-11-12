@@ -1,40 +1,673 @@
-name: hashicorp/null
+name: cloudscale-ch/cloudscale
 resources:
-    null_resource:
+    cloudscale_custom_image:
         subCategory: ""
-        description: The null_resource resource implements the standard resource lifecycle but takes no further action. On Terraform 1.4 and later, use the terraform_data resource type https://developer.hashicorp.com/terraform/language/resources/terraform-data instead. Terraform 1.9 and later support the moved configuration block from null_resource to terraform_data. The triggers argument allows specifying an arbitrary set of values that, when changed, will cause the resource to be replaced.
-        name: null_resource
-        title: null_resource Resource - terraform-provider-null
+        name: cloudscale_custom_image
+        title: cloudscale_custom_image
         examples:
-            - name: cluster
+            - name: your_image
               manifest: |-
                 {
-                  "connection": [
+                  "firmware_type": "bios",
+                  "import_url": "https://mirror.example.com/your-distro-12.12-openstack-amd64.raw",
+                  "name": "Your Distro 12.12",
+                  "slug": "your-distro-12.12",
+                  "timeouts": [
                     {
-                      "host": "${element(aws_instance.cluster[*].public_ip, 0)}"
+                      "create": "10m"
                     }
                   ],
-                  "provisioner": {
-                    "remote-exec": [
-                      {
-                        "inline": [
-                          "bootstrap-cluster.sh ${join(\" \",\n      aws_instance.cluster[*].private_ip)}"
-                        ]
-                      }
-                    ]
-                  },
-                  "triggers": {
-                    "cluster_instance_ids": "${join(\",\", aws_instance.cluster[*].id)}"
-                  }
+                  "user_data_handling": "extend-cloud-config",
+                  "zone_slugs": [
+                    "rma1"
+                  ]
                 }
               dependencies:
-                aws_instance.cluster: |-
+                cloudscale_server.your_server: |-
                     {
-                      "ami": "ami-0dcc1e21636832c5d",
-                      "count": 3,
-                      "instance_type": "m5.large"
+                      "flavor_slug": "flex-8-4",
+                      "image_uuid": "${cloudscale_custom_image.your_image.id}",
+                      "name": "your-server",
+                      "ssh_keys": [
+                        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                      ],
+                      "volume_size_gb": 16,
+                      "zone_slug": "rma1"
                     }
         argumentDocs:
-            id: (String) This is set to a random value at create time.
-            triggers: (Map of String) A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
+            checksums: '- The checksums of the custom image as map.'
+            firmware_type: '- (Optional) The firmware type that will be used for servers created with the custom image. Options include bios and uefi.'
+            href: '- The cloudscale.ch API URL of the current resource.'
+            import_href: '- The cloudscale.ch API URL of the custom image import.'
+            import_source_format: '- (Optional) The file format of the image referenced in the import_url. Options include raw, qcow2.'
+            import_status: '- The status of the custom image import. Options include started, in_progress, failed, success.'
+            import_url: '- (Required) The URL used to download the image.'
+            import_uuid: '- The UUID of the custom image import.'
+            name: '- (Required) The human-readable name of the custom image.'
+            size_gb: '- The size in GB of the custom image.'
+            slug: '- (Optional) A string identifying the custom image for use within the API.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            timeouts: '- (Optional) Specify how long certain operations are allowed to take before being considered to have failed. Currently, only the create timeout can be specified. Takes a string representation of a duration, such as 20m for 20 minutes (default), 10s for ten seconds, or 2h for two hours.'
+            user_data_handling: '- (Required) How user_data will be handled when creating a server. Options include pass-through and extend-cloud-config.'
+            zone_slugs: '- (Required) Specify the zones in which the custom image will be available. Options include lpg1 and rma1.'
+        importStatements: []
+    cloudscale_floating_ip:
+        subCategory: ""
+        name: cloudscale_floating_ip
+        title: cloudscale_floating_ip
+        examples:
+            - name: web-worker01-vip
+              manifest: |-
+                {
+                  "ip_version": 4,
+                  "reverse_ptr": "vip.web-worker01.example.com",
+                  "server": "${cloudscale_server.web-worker01.id}"
+                }
+              references:
+                server: cloudscale_server.web-worker01.id
+              dependencies:
+                cloudscale_server.web-worker01: |-
+                    {
+                      "flavor_slug": "flex-8-4",
+                      "image_slug": "debian-11",
+                      "name": "web-worker01",
+                      "ssh_keys": [
+                        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                      ]
+                    }
+            - name: web-worker01-net
+              manifest: |-
+                {
+                  "ip_version": 6,
+                  "prefix_length": 56,
+                  "server": "${cloudscale_server.web-worker01.id}"
+                }
+              references:
+                server: cloudscale_server.web-worker01.id
+              dependencies:
+                cloudscale_server.web-worker01: |-
+                    {
+                      "flavor_slug": "flex-8-4",
+                      "image_slug": "debian-11",
+                      "name": "web-worker01",
+                      "ssh_keys": [
+                        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                      ]
+                    }
+        argumentDocs:
+            href: '- The cloudscale.ch API URL of the current resource.'
+            ip_version: '- (Required) 4 or 6, for an IPv4 or IPv6 address or network respectively.'
+            load_balancer: '- (Optional) Assign the Floating IP to this load balancer (UUID).'
+            network: '- The CIDR notation of the Floating IP address or network, e.g. 192.0.2.123/32.'
+            next_hop: '- The IP address of the server or load balancer that your Floating IP is currently assigned to.'
+            prefix_length: '- (Optional) If you want to assign an entire network instead of a single IP address to your server, you must specify the prefix length. Currently, there is only support for ip_version=6 and prefix_length=56.'
+            region_slug: '- (Optional) The slug of the region in which the new Regional Floating IP will be created. Options include lpg and rma.'
+            reverse_ptr: '- (Optional) You can specify the PTR record (reverse DNS pointer) in case of a single Floating IP address.'
+            server: '- (Optional) Assign the Floating IP to this server (UUID).'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            type: '- (Optional) You can specify the type. Options include regional (default) and global.'
+        importStatements: []
+    cloudscale_load_balancer:
+        subCategory: ""
+        name: cloudscale_load_balancer
+        title: cloudscale_load_balancer
+        examples:
+            - name: lb1
+              manifest: |-
+                {
+                  "flavor_slug": "lb-standard",
+                  "name": "web-lb1",
+                  "zone_slug": "lpg1"
+                }
+        argumentDocs:
+            address: '- (Optional) An VIP address that has been assigned to this load balancer.'
+            flavor_slug: |-
+                - (Required) The slug (name) of the flavor to use for the new load balancer. Possible values can be found in our API documentation.
+                Note: It's currently not possible to update the flavor after the load balancer has been created. It is therfore recommended to use load balancer in conjunction with a Floating IP.
+            href: '- The cloudscale.ch API URL of the current resource.'
+            id: '- The UUID of this load balancer.'
+            name: '- (Required) Name of the new load balancer.'
+            status: '- The current status of the load balancer.'
+            subnet_cidr: '- The cidr of the subnet the VIP address is part of.'
+            subnet_href: '- The cloudscale.ch API URL of the subnet the VIP address is part of.'
+            subnet_uuid: '- (Optional) The UUID of the subnet this VIP address should be part of.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            version: '- The IP version, either 4 or 6.'
+            vip_addresses: '- (Optional) A list of VIP address objects. This attributes needs to be specified if the load balancer should be assigned a VIP address in a subnet on a private network. If the  VIP address should be created on the public network, this attribute should be omitted. Each VIP address object has the following attributes:'
+            zone_slug: '- (Required) The slug of the zone in which the new load balancer will be created. Options include lpg1 and rma1.'
+        importStatements: []
+    cloudscale_load_balancer_health_monitor:
+        subCategory: ""
+        name: cloudscale_load_balancer_health_monitor
+        title: cloudscale_load_balancer_health_monitor
+        examples:
+            - name: lb1-health-monitor
+              manifest: |-
+                {
+                  "http_host": "www.cloudscale.ch",
+                  "http_url_path": "/",
+                  "http_version": "1.1",
+                  "pool_uuid": "${cloudscale_load_balancer_pool.lb1-pool.id}",
+                  "type": "http"
+                }
+              references:
+                pool_uuid: cloudscale_load_balancer_pool.lb1-pool.id
+        argumentDocs:
+            delay_s: '- (Optional) The delay between two successive checks in seconds.  Default is 2.'
+            down_threshold: '- (Optional) The number of checks that need to fail before the monitor_status of a pool member changes to "down". Default is 3.'
+            href: '- The cloudscale.ch API URL of the current resource.'
+            http_expected_codes: '- (Optional) The HTTP status codes allowed for a check to be considered successful. Can either be a list of status codes, for example ["200", "202"], or a list containing a single range, for example ["200-204"]. Default is ["200"].'
+            http_host: '- (Optional) The server name in the HTTP Host: header used for the check. Requires version to be set to "1.1".'
+            http_method: '- (Optional) The HTTP method used for the check. Options include "CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT" and "TRACE". Default is "GET".'
+            http_url_path: '- (Optional) The URL used for the check. Default is "/".'
+            http_version: '- (Optional) The HTTP version used for the check. Options include "1.0" and "1.1". Default is "1.1".'
+            id: '- The UUID of this load balancer health monitor.'
+            name: '- (Required) Name of the new load balancer health monitor.'
+            pool_href: '- The cloudscale.ch API URL of the health monitor''s load balancer pool.'
+            pool_name: '- The load balancer pool name of the health monitor.'
+            pool_uuid: '- (Required) The pool of the health monitor.'
+            tags: '- (Optional) Tags allow you to assign custom metadata to resources:'
+            timeout_s: '- (Optional) The maximum time allowed for an individual check in seconds.  Default is 1.'
+            type: '- (Required) The type of the health monitor. Options include: "ping", "tcp", "http", "https" and "tls-hello".'
+            up_threshold: '- (Optional) The number of checks that need to be successful before the monitor_status of a pool member changes to "up". Default is 2.'
+        importStatements: []
+    cloudscale_load_balancer_listener:
+        subCategory: ""
+        name: cloudscale_load_balancer_listener
+        title: cloudscale_load_balancer_listener
+        examples:
+            - name: lb1-listener
+              manifest: |-
+                {
+                  "name": "web-lb1-listener",
+                  "pool_uuid": "${cloudscale_load_balancer_pool.lb1-pool.id}",
+                  "protocol": "tcp",
+                  "protocol_port": 80
+                }
+              references:
+                pool_uuid: cloudscale_load_balancer_pool.lb1-pool.id
+              dependencies:
+                cloudscale_load_balancer.lb1: |-
+                    {
+                      "flavor_slug": "lb-standard",
+                      "name": "web-lb1",
+                      "zone_slug": "lpg1"
+                    }
+                cloudscale_load_balancer_pool.lb1-pool: |-
+                    {
+                      "algorithm": "round_robin",
+                      "load_balancer_uuid": "${cloudscale_load_balancer.lb1.id}",
+                      "name": "web-lb1-pool",
+                      "protocol": "tcp"
+                    }
+        argumentDocs:
+            allowed_cidrs: '- (Optional) Restrict the allowed source IPs for this listener. [] means that any source IP is allowed. If the list is non-empty, traffic from source IPs not included is denied.'
+            href: '- The cloudscale.ch API URL of the current resource.'
+            id: '- The UUID of this load balancer listner.'
+            name: '- (Required) Name of the new load balancer listener.'
+            pool_href: '- The cloudscale.ch API URL of the listener''s load balancer pool.'
+            pool_name: '- The load balancer pool name of the listener.'
+            pool_uuid: '- (Optional/Required depending on protocol) The pool of the listener.'
+            protocol: '- (Required) The protocol used for receiving traffic. Options include "tcp".'
+            protocol_port: '- (Required) The port on which traffic is received.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            timeout_client_data_ms: '- (Optional) Client inactivity timeout in milliseconds.'
+            timeout_member_connect_ms: '- (Optional) Pool member connection timeout in milliseconds.'
+            timeout_member_data_ms: '- (Optional) Pool member inactivity timeout in milliseconds.'
+        importStatements: []
+    cloudscale_load_balancer_pool:
+        subCategory: ""
+        name: cloudscale_load_balancer_pool
+        title: cloudscale_load_balancer_pool
+        examples:
+            - name: lb1-pool
+              manifest: |-
+                {
+                  "algorithm": "round_robin",
+                  "load_balancer_uuid": "${cloudscale_load_balancer.lb1.id}",
+                  "name": "web-lb1-pool",
+                  "protocol": "tcp"
+                }
+              references:
+                load_balancer_uuid: cloudscale_load_balancer.lb1.id
+              dependencies:
+                cloudscale_load_balancer.lb1: |-
+                    {
+                      "flavor_slug": "lb-standard",
+                      "name": "web-lb1",
+                      "zone_slug": "lpg1"
+                    }
+        argumentDocs:
+            algorithm: '- (Required) The algorithm according to which the incoming traffic is distributed between the pool members. Options include "round_robin", "least_connections" and "source_ip".'
+            href: '- The cloudscale.ch API URL of the current resource.'
+            id: '- The UUID of this load balancer pool.'
+            load_balancer_href: '- The cloudscale.ch API URL of the pool''s load balancer.'
+            load_balancer_name: '- The load balancer name of the pool.'
+            load_balancer_uuid: '- (Required) The load balancer of the pool.'
+            name: '- (Required) Name of the new load balancer pool.'
+            protocol: '- (Required) The protocol used for traffic between the load balancer and the pool members. Options include: "tcp", "proxy" and "proxyv2".'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+        importStatements: []
+    cloudscale_load_balancer_pool_member:
+        subCategory: ""
+        name: cloudscale_load_balancer_pool_member
+        title: cloudscale_load_balancer_pool_member
+        examples:
+            - name: lb1-pool-member
+              manifest: |-
+                {
+                  "address": "${cloudscale_server.web-worker[count.index].interfaces[1].addresses[0].address}",
+                  "count": 2,
+                  "name": "web-lb1-pool-member-${count.index}",
+                  "pool_uuid": "${cloudscale_load_balancer_pool.lb1-pool.id}",
+                  "protocol_port": 80,
+                  "subnet_uuid": "${cloudscale_subnet.backend-subnet.id}"
+                }
+              references:
+                pool_uuid: cloudscale_load_balancer_pool.lb1-pool.id
+                subnet_uuid: cloudscale_subnet.backend-subnet.id
+              dependencies:
+                cloudscale_load_balancer.lb1: |-
+                    {
+                      "flavor_slug": "lb-standard",
+                      "name": "web-lb1",
+                      "zone_slug": "lpg1"
+                    }
+                cloudscale_load_balancer_pool.lb1-pool: |-
+                    {
+                      "algorithm": "round_robin",
+                      "load_balancer_uuid": "${cloudscale_load_balancer.lb1.id}",
+                      "name": "web-lb1-pool",
+                      "protocol": "tcp"
+                    }
+                cloudscale_network.backend: |-
+                    {
+                      "auto_create_ipv4_subnet": "false",
+                      "name": "backend",
+                      "zone_slug": "lpg1"
+                    }
+                cloudscale_server.web-worker: |-
+                    {
+                      "count": 2,
+                      "flavor_slug": "flex-4-2",
+                      "image_slug": "ubuntu-22.04",
+                      "interfaces": [
+                        {
+                          "type": "public"
+                        },
+                        {
+                          "addresses": [
+                            {
+                              "subnet_uuid": "${cloudscale_subnet.backend-subnet.id}"
+                            }
+                          ],
+                          "type": "private"
+                        }
+                      ],
+                      "name": "web-worker${count.index}",
+                      "ssh_keys": [
+                        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                      ],
+                      "zone_slug": "lpg1"
+                    }
+                cloudscale_subnet.backend-subnet: |-
+                    {
+                      "cidr": "10.11.12.0/24",
+                      "network_uuid": "${cloudscale_network.backend.id}"
+                    }
+        argumentDocs:
+            address: '- (Required) The IP address to which traffic is sent.'
+            enabled: '- (Optional) Pool member will not receive traffic if false. Default is true.'
+            href: '- The cloudscale.ch API URL of the current resource.'
+            id: '- The UUID of this load balancer pool member.'
+            monitor_port: '- (Optional) The port to which health monitor checks are sent. If not specified, protocol_port will be used.'
+            monitor_status: '- The status of the pool''s health monitor check for this member. Can be "up", "down", "changing", "no_monitor" and "unknown".'
+            name: '- (Required) Name of the new load balancer pool member.'
+            pool_href: '- The cloudscale.ch API URL of the member''s load balancer pool.'
+            pool_name: '- The load balancer pool name of the member.'
+            pool_uuid: '- (Required) The load balancer pool of the member.'
+            protocol_port: '- (Required) The port to which actual traffic is sent.'
+            subnet_cidr: '- The CIDR of the member''s address subnet.'
+            subnet_href: '- The cloudscale.ch API URL of the member''s address subnet.'
+            subnet_uuid: '- (Required) The subnet UUID of the address must be specified here.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+        importStatements: []
+    cloudscale_network:
+        subCategory: ""
+        name: cloudscale_network
+        title: cloudscale_network
+        examples:
+            - name: privnet
+              manifest: |-
+                {
+                  "mtu": "9000",
+                  "name": "privnet",
+                  "zone_slug": "lpg1"
+                }
+              dependencies:
+                cloudscale_server.gw: |-
+                    {
+                      "flavor_slug": "flex-8-4",
+                      "image_slug": "debian-11",
+                      "interfaces": [
+                        {
+                          "type": "public"
+                        },
+                        {
+                          "network_uuid": "${cloudscale_network.privnet.id}",
+                          "type": "private"
+                        }
+                      ],
+                      "name": "gateway",
+                      "ssh_keys": [
+                        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                      ],
+                      "volume_size_gb": 20,
+                      "zone_slug": "lpg1"
+                    }
+        argumentDocs:
+            auto_create_ipv4_subnet: '- (Optional) Automatically create an IPv4 Subnet on the network. Can be true (default) or false.'
+            cidr: '- The CIDR notation of the subnet.'
+            href: '- The cloudscale.ch API URL of the current network.'
+            mtu: '- (Optional) You can specify the MTU size for the network, defaults to 9000.'
+            name: '- (Required) Name of the network.'
+            subnets: '-  A list of subnet objects that are used in this network. Each subnet object has the following attributes:'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            uuid: '- The UUID of this subnet.'
+            zone_slug: '- (Optional) The slug of the zone in which the new network will be created. Options include lpg1 and rma1.'
+        importStatements: []
+    cloudscale_objects_user:
+        subCategory: ""
+        name: cloudscale_objects_user
+        title: cloudscale_objects_user
+        examples:
+            - name: basic
+              manifest: |-
+                {
+                  "display_name": "donald_knuth"
+                }
+        argumentDocs:
+            access_key: '- The S3 access key of the Objects User.'
+            display_name: '- (Required) The display name of the Objects User.'
+            href: '- The cloudscale.ch API URL of the current resource.'
+            keys: '- A list of key objects containing the access and secret key associated with the Objects User. Currently, only one key object is returned. Each key object has the following attributes:'
+            secret_key: '- The S3 secret key of the Objects User.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            user_id: '- The unique identifier of the Objects User.'
+        importStatements: []
+    cloudscale_server:
+        subCategory: ""
+        name: cloudscale_server
+        title: cloudscale_server
+        examples:
+            - name: web-worker01
+              manifest: |-
+                {
+                  "flavor_slug": "flex-8-4",
+                  "image_slug": "debian-11",
+                  "name": "web-worker01",
+                  "ssh_keys": [
+                    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                  ],
+                  "timeouts": [
+                    {
+                      "create": "10m",
+                      "update": "1h"
+                    }
+                  ],
+                  "volume_size_gb": 10
+                }
+        argumentDocs:
+            address: '- (Optional) An IP address that has been assigned to this server.'
+            addresses: '- (Optional, can be set only for private interfaces) A list of address objects:'
+            allow_stopping_for_update: '- (Optional) If true, allows Terraform to stop the instance to update its properties. If you try to update a property that requires stopping the instance without setting this field, the update will fail.'
+            bulk_volume_size_gb: '- (Optional, Deprecated) The size in GB of the bulk storage volume of the new server. If this parameter is not specified, no bulk storage volume will be attached to the server. Valid values are multiples of 100.'
+            create: '- The timeout for creating a resource. Takes a string representation of a duration such as 5m for 5 minutes, 10s for ten seconds, or 2h for two hours. The default value is 5m.'
+            device_path: '- The path (string) to the volume on your server (e.g. /dev/vda)'
+            flavor_slug: |-
+                - (Required) The slug (name) of the flavor to use for the new server. Possible values can be found in our API documentation.
+                Note: If you want to update this value after initial creation, you must set allow_stopping_for_update to true.
+            gateway: '- An IPv4 or IPv6 address that represents the default gateway for this interface.'
+            href: '- The cloudscale.ch API URL of the current resource.'
+            id: '- The UUID of this server.'
+            image_slug: '- (Required, if image_uuid not set) The slug (name) of the image (or custom image) to use for the new server. Possible values can be found in our API documentation.'
+            image_uuid: '- (Required, if image_slug not set) The UUID of the custom image to use for the new server. Note: This is the recommended approach for custom images.'
+            interfaces: '- (Optional) A list of interface configuration objects (see example). Each interface object has the following attributes:'
+            name: '- (Required) Name of the new server. The name has to be a valid host name or a fully qualified domain name (FQDN).'
+            network_href: '- The cloudscale.ch API URL of the network the interface is attached to.'
+            network_name: '- The name of the network the interface is attached to.'
+            network_uuid: '- (Optional, can be set only for private interfaces) The UUID of the private network this interface should be attached to. Must be compatible with subnet_uuid if both are specified.'
+            no_address: '- (Optional, can be set only for private interfaces) You need to set this to true if no address should be configured, e.g. if you want to attach to a network without a subnet.'
+            password: '- (Optional) The password of the default user of the new server. When omitted, no password will be set.'
+            prefix_length: '- The prefix length for this IP address, typically 24 for IPv4 and 128 for IPv6.'
+            private_ipv4_address: '- The first private IPv4 address of this server. The returned IP address may be "" if the server does not have private networking enabled.'
+            public_ipv4_address: '- The first public IPv4 address of this server. The returned IP address may be "" if the server does not have a public IPv4.'
+            public_ipv6_address: '- The first public IPv6 address of this server. The returned IP address may be "" if the server does not have a public IPv6.'
+            reverse_ptr: '- The PTR record (reverse DNS pointer) for this IP address. If you use an FQDN as your server name it will automatically be used here.'
+            server_group_ids: '- (Optional) A list of server group UUIDs to which the server should be added. Default to an empty list.'
+            size_gb: '- The size (int) of the volume in GB. Typically matches volume_size_gb or bulk_volume_size_gb.'
+            skip_waiting_for_ssh_host_keys: '- (Optional) If set to true, do not wait until SSH host keys become available.'
+            ssh_fingerprints: '- A list of SSH host key fingerprints (strings) of this server.'
+            ssh_host_keys: '- A list of SSH host keys (strings) of this server.'
+            ssh_keys: '- (Optional) A list of SSH public keys. Use the full content of your *.pub file here.'
+            status: '- (Optional) The desired state of a server. Can be running (default) or stopped.'
+            subnet_cidr: '- The cidr of the subnet the address is part of.'
+            subnet_href: '- The cloudscale.ch API URL of the subnet the address is part of.'
+            subnet_uuid: '- (Optional) The UUID of the subnet this address should be part of. Must be compatible with network_uuid if both are specified.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            timeouts: '- (Optional) Specify how long certain operations are allowed to take before being considered to have failed. The following timeouts can be specified:'
+            type: '- (Required) The type of the interface. Can be public or private.'
+            update: '- The timeout for updating a resource. Takes a string representation of a duration such as 5m for 5 minutes, 10s for ten seconds, or 2h for two hours. The default value is 1h.'
+            use_ipv6: '- (Optional) Enable/disable IPv6 on the public network interface of the new server. Can be true (default) or false.'
+            use_private_network: '- (Optional) Attach the default private network interface to the new server. Can be true or false (default). Use interfaces option for advanced setups.'
+            use_public_network: '- (Optional) Attach the public network interface to the new server. Can be true (default) or false. Use interfaces option for advanced setups.'
+            user_data: '- (Optional) User data (custom cloud-config settings) to use for the new server. Needs to be valid YAML. A default configuration will be used if this parameter is not specified or set to null. Use only if you are an advanced user with knowledge of cloud-config and cloud-init.'
+            version: '- The IP version, either 4 or 6.'
+            volume_size_gb: '- (Optional) The size in GB of the SSD root volume of the new server. If this parameter is not specified, the value will be set to 10. The minimum value is 10.'
+            volumes: '- A list of volume objects attached to this server. Each volume object has three attributes:'
+            zone_slug: '- (Optional) The slug of the zone in which the new server will be created. Options include lpg1 and rma1.'
+        importStatements: []
+    cloudscale_server_group:
+        subCategory: ""
+        name: cloudscale_server_group
+        title: cloudscale_server_group
+        examples:
+            - name: web-worker-group
+              manifest: |-
+                {
+                  "name": "web-worker-group",
+                  "type": "anti-affinity"
+                }
+              dependencies:
+                cloudscale_server.web-worker01: |-
+                    {
+                      "count": 3,
+                      "flavor_slug": "flex-8-4",
+                      "image_slug": "debian-11",
+                      "name": "web-worker${count.index}",
+                      "server_group_ids": [
+                        "${cloudscale_server_group.web-worker-group.id}"
+                      ],
+                      "ssh_keys": [
+                        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                      ]
+                    }
+        argumentDocs:
+            href: '- The cloudscale.ch API URL of the current resource.'
+            name: '- (Required) Name of the new server group.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            type: '- (Required) The type of the server group can currently only be "anti-affinity".'
+            zone_slug: '- (Optional) The slug of the zone in which the new server group will be created. Options include lpg1 and rma1.'
+        importStatements: []
+    cloudscale_subnet:
+        subCategory: ""
+        name: cloudscale_subnet
+        title: cloudscale_subnet
+        examples:
+            - name: privnet-subnet
+              manifest: |-
+                {
+                  "cidr": "10.11.12.0/24",
+                  "dns_servers": [
+                    "1.2.3.4",
+                    "5.6.7.8",
+                    "9.10.11.12"
+                  ],
+                  "gateway_address": "10.11.12.10",
+                  "network_uuid": "${cloudscale_network.privnet.id}"
+                }
+              references:
+                network_uuid: cloudscale_network.privnet.id
+              dependencies:
+                cloudscale_network.privnet: |-
+                    {
+                      "auto_create_ipv4_subnet": "false",
+                      "mtu": "9000",
+                      "name": "privnet",
+                      "zone_slug": "lpg1"
+                    }
+                cloudscale_server.fixed: |-
+                    {
+                      "flavor_slug": "flex-4-1",
+                      "image_slug": "debian-11",
+                      "interfaces": [
+                        {
+                          "type": "public"
+                        },
+                        {
+                          "addresses": [
+                            {
+                              "address": "10.11.12.13",
+                              "subnet_uuid": "cloudscale_subnet.privnet-subnet.id"
+                            }
+                          ],
+                          "type": "private"
+                        }
+                      ],
+                      "name": "fix",
+                      "ssh_keys": [
+                        "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFEepRNW5hDct4AdJ8oYsb4lNP5E9XY5fnz3ZvgNCEv7m48+bhUjJXUPuamWix3zigp2lgJHC6SChI/okJ41GUY=",
+                        "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFEepRNW5hDct4AdJ8oYsb4lNP5E9XY5fnz3ZvgNCEv7m48+bhUjJXUPuamWix3zigp2lgJHC6SChI/okJ41GUY="
+                      ],
+                      "volume_size_gb": 10,
+                      "zone_slug": "lpg1"
+                    }
+        argumentDocs:
+            cidr: '- (Required) The address range in CIDR notation. Must be at least /24.'
+            disable_dns_servers: '- (Optional) If set to true, no DNS servers are set. Can not be used together with dns_servers.'
+            dns_servers: '- (Optional) A list of DNS resolver IP addresses, that act as DNS servers. If not defined, default DNS servers are used. Do not explicitly set to an empty list (dns_servers = []), use disable_dns_servers instead.'
+            gateway_address: '- (Optional) The gateway address of the subnet.'
+            href: '- The cloudscale.ch API URL of the current subnet.'
+            network_href: '- The cloudscale.ch API URL of the subnet''s network.'
+            network_name: '- The network name of the subnet.'
+            network_uuid: '- (Required) The network of the subnet.'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+        importStatements: []
+    cloudscale_volume:
+        subCategory: ""
+        name: cloudscale_volume
+        title: cloudscale_volume
+        examples:
+            - name: web-worker01-volume
+              manifest: |-
+                {
+                  "name": "web-worker-data",
+                  "server_uuids": [
+                    "${cloudscale_server.web-worker01.id}"
+                  ],
+                  "size_gb": 100,
+                  "type": "ssd"
+                }
+              references:
+                server_uuids: cloudscale_server.web-worker01.id
+              dependencies:
+                cloudscale_server.web-worker01: |-
+                    {
+                      "flavor_slug": "flex-8-4",
+                      "image_slug": "debian-11",
+                      "name": "web-worker01",
+                      "ssh_keys": [
+                        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL2jzgla23DfRVLQr3KT20QQYovqCCN3clHrjm2ZuQFW user@example.com"
+                      ]
+                    }
+        argumentDocs:
+            href: '- The cloudscale.ch API URL of the current resource.'
+            name: '- (Required) Name of the new volume.'
+            server_uuids: '- (Optional) A list of server UUIDs. Default to an empty list. Currently a volume can only be attached to one server UUID.'
+            size_gb: '- (Required) The volume size in GB. Valid values are multiples of 1 for type "ssd" and multiples of 100 for type "bulk".'
+            tags: |-
+                - (Optional) Tags allow you to assign custom metadata to resources:
+                tags = {
+                  foo = "bar"
+                }
+
+                Tags are always strings (both keys and values).
+            type: '- (Optional) For SSD/NVMe volumes specify "ssd" (default) or use "bulk" for our HDD cluster with NVMe caching. This is the only attribute that cannot be altered.'
+            zone_slug: '- (Optional) The slug of the zone in which the new volume will be created. Options include lpg1 and rma1.'
         importStatements: []
